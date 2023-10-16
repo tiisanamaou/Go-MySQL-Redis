@@ -36,54 +36,37 @@ func JwtGenerater(userid string) {
 }
 
 // JWTの検証
-func JwtVerify(jwtToken string) {
+func JwtVerify(jwtToken string) (userid string, err error) {
 	token, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			fmt.Println("アルゴリズムが正しくありません")
+			return nil, nil
 		}
+
 		//return []byte("SECRET_KEY"), nil
 		return []byte("prsk_key"), nil
 	})
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		//fmt.Printf("user_id: %v\n", int64(claims["user_id"].(float64)))
-		fmt.Printf("user_id: %v\n", string(claims["user_id"].(string)))
-		//fmt.Printf("password: %v\n", string(claims["password"].(string)))
-		fmt.Printf("exp: %v\n", int64(claims["exp"].(float64)))
-		fmt.Printf("alg: %v\n", token.Header["alg"])
-		//
-		//
-		fmt.Println("----------")
-		// unix時刻を日時に変換し有効時間を確認
-		//unix := int64(claims["exp"].(int64))
-		unix := int64(claims["exp"].(float64))
-		dtFromUnix := time.Unix(unix, 0)
-		//
-		//nowtime := time.Now()
-		nowtime := time.Now().Add(time.Hour * 2)
-		// 時刻比較、現在時刻を超えているか、超えていたらfalse
-		diff := dtFromUnix.After(nowtime)
-		//
-		fmt.Println(nowtime)
-		fmt.Println(dtFromUnix)
-		fmt.Println(diff)
-		//
-		fmt.Println("----------")
-		nowunix := time.Now().Unix()
-		//nowunix := time.Now().Add(time.Hour * 2).Unix()
-		fmt.Println("制限時刻:", unix)
-		fmt.Println("現在時刻:", nowunix)
-		if unix < nowunix {
-			fmt.Println("制限時刻を超えています")
-		} else {
-			fmt.Println("制限時刻を超えていません")
-		}
-		//
-		//
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if ok && token.Valid {
+		fmt.Println("認証OK")
 	} else {
 		fmt.Println("認証エラー")
-		fmt.Println(err)
+		return "", err
 	}
+
+	userID, ok := claims["user_id"].(string)
+	if !ok {
+		fmt.Println("not found user_id in " + jwtToken)
+		return "", err
+	}
+
+	fmt.Println(userID)
 	fmt.Println("----------")
+	return userID, nil
 }

@@ -191,7 +191,7 @@ func SearchToDo(db *sql.DB, searchWord string) {
 		todo := &ToDo{}
 		if err := rows.Scan(
 			&todo.ID,
-			//&todo.Uuid,
+			&todo.UserID,
 			&todo.Title,
 			&todo.Status, //Add
 			&todo.CreateAt,
@@ -203,8 +203,8 @@ func SearchToDo(db *sql.DB, searchWord string) {
 		}
 		//
 		todolist = append(todolist, ToDo{
-			ID: todo.ID,
-			//Uuid:     todo.Uuid,
+			ID:       todo.ID,
+			UserID:   todo.UserID,
 			Title:    todo.Title,
 			Status:   todo.Status, // Add
 			CreateAt: todo.CreateAt,
@@ -267,4 +267,50 @@ func UserSignUp(db *sql.DB, userid string, password string) error {
 	//
 	fmt.Println(res)
 	return nil
+}
+
+// 特定のユーザーの指定したタイトルを含むレコードの内容を全件取得する
+func SearchUserToDo(db *sql.DB, userid string, searchWord string) {
+	rows, err := db.Query(
+		"SELECT * FROM "+TableName+" WHERE title LIKE CONCAT('%', ?, '%') AND userid = ?",
+		searchWord,
+		userid,
+	)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var todolist []ToDo
+	//
+	for rows.Next() {
+		todo := &ToDo{}
+		if err := rows.Scan(
+			&todo.ID,
+			&todo.UserID,
+			&todo.Title,
+			&todo.Status, //Add
+			&todo.CreateAt,
+			&todo.UpdateAt,
+		); err != nil {
+			fmt.Println(err)
+			fmt.Println("Scanエラー")
+			return
+		}
+		//
+		todolist = append(todolist, ToDo{
+			ID:       todo.ID,
+			UserID:   todo.UserID,
+			Title:    todo.Title,
+			Status:   todo.Status, // Add
+			CreateAt: todo.CreateAt,
+			UpdateAt: todo.UpdateAt,
+		})
+	}
+	err = rows.Err()
+	if err != nil {
+		fmt.Println("rows.Nextエラー")
+		fmt.Println(err)
+	}
+	//
+	ResToDo.ToDos = todolist
 }

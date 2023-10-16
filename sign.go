@@ -108,17 +108,81 @@ func SignIn(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	log.Println("パスワード一致")
+
 	JwtGenerater(loginRequest.UserID)
 	JwtVerify(JwtString)
-	//
-	//w.Header().Set("JWT", JwtString)
-	//
+
+	w.Header().Set("JWT", JwtString)
+
 	//w.WriteHeader(http.StatusNoContent) //204
 	w.WriteHeader(http.StatusOK) //200
 	// Responseにデータを格納
 	buf, _ := json.Marshal(loginRequest)
 	_, _ = w.Write(buf)
+
+	// RedisにUserIDをKEYにしてJWTをValueとして登録する
+	rdb := RedisConnect()
+	RedisDataSet(rdb, loginRequest.UserID, JwtString)
+
 	log.Println("サインイン完了")
 }
 
 // サインイン後のリクエスト処理
+/*
+JWTがあっている場合のみリクエストを受け付ける
+*/
+func SigninGET(w http.ResponseWriter, req *http.Request) {
+	// Methodの確認
+	if req.Method != "GET" {
+		//w.WriteHeader(http.StatusBadRequest) //400
+		w.WriteHeader(http.StatusServiceUnavailable) //503
+		return
+	}
+
+	jwtHeader := req.Header.Get("JWT")
+	//fmt.Println(header)
+	userid, err := JwtVerify(jwtHeader)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusServiceUnavailable) //503
+		return
+	}
+
+	db := MysqlConnect()
+	// MySQLに接続できなかったなら503を返す
+	if db == nil {
+		w.WriteHeader(http.StatusServiceUnavailable) //503
+		return
+	}
+	defer db.Close()
+
+	rdb := RedisConnect()
+	//RedisDataSet(rdb, userid, jwtHeader)
+	jwtRedis := RedisDataGet(rdb, userid)
+	if jwtRedis == "" {
+		fmt.Println("有効期限切れ:TTL")
+		w.WriteHeader(http.StatusServiceUnavailable) //503
+		return
+	}
+	if jwtRedis != jwtHeader {
+		fmt.Println("Redisエラー")
+		w.WriteHeader(http.StatusServiceUnavailable) //503
+		return
+	}
+	// 問題なければRedis上のTTLを更新する
+	RedisDataSet(rdb, userid, jwtHeader)
+
+	//
+	req.FormValue("search")
+	QueryPara := req.FormValue("search")
+	// 特定のユーザーのToDoを取得
+	SearchUserToDo(db, userid, QueryPara)
+
+	// ステータスコードの設定
+	w.WriteHeader(http.StatusOK) //200
+	// Responseにデータを格納
+	buf, _ := json.Marshal(ResToDo)
+	_, _ = w.Write(buf)
+
+	fmt.Println("----------")
+}
