@@ -15,9 +15,11 @@ func JwtGenerater(userid string) {
 	claims := jwt.MapClaims{
 		"user_id": userid,
 		//"password": "12345",
-		//"exp":      time.Now().Add(time.Hour * 24).Unix(),
-		"exp": time.Now().Add(time.Hour * 1).Unix(),
+		//"exp": time.Now().Add(time.Hour * 24).Unix(),
+		//"exp": time.Now().Add(time.Hour * 1).Unix(),
+		"exp": time.Now().Add(time.Minute * 30).Unix(),
 	}
+
 	// ヘッダーとペイロードの生成
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// Header: map[string]interface {}{"alg":"HS256", "typ":"JWT"}
@@ -28,10 +30,10 @@ func JwtGenerater(userid string) {
 	// トークンに署名を付与
 	//tokenString, _ := token.SignedString([]byte("SECRET_KEY"))
 	tokenString, _ := token.SignedString([]byte("prsk_key"))
-	//
+
 	fmt.Println("tokenString:", tokenString)
 	JwtString = tokenString
-	//
+
 	fmt.Println("----------")
 }
 

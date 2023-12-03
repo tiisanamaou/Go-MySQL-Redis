@@ -53,6 +53,9 @@ func main() {
 	http.HandleFunc("/signup", SignUp)
 	http.HandleFunc("/signin", SignIn)
 	http.HandleFunc("/signin-get", SigninGET)
+	http.HandleFunc("/signin-post", SigninPOST)
+	http.HandleFunc("/signin-put", SigninPUT)
+	http.HandleFunc("/signin-delete", SigninDELETE)
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -142,8 +145,8 @@ func POSTMethod(w http.ResponseWriter, req *http.Request) {
 	}
 	defer db.Close()
 	// uuid
-	uu := UuidGenerate()
-	_, err = InsertTodo(db, todo.ID, uu, todo.Title)
+	//uu := UuidGenerate()
+	_, err = InsertTodo(db, todo.UserID, todo.Title, 50)
 	//
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable) //503
@@ -190,13 +193,15 @@ func PUTMethod(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer db.Close()
+
 	// 指定したUUIDのレコードがあるか確認
 	// なかったら404を返す
-	recordCount, _ := UuidCount(db, todo.ID)
-	if recordCount == 0 {
-		w.WriteHeader(http.StatusNotFound) //404
-		return
-	}
+	//recordCount, _ := UuidCount(db, todo.ID)
+	//if recordCount == 0 {
+	//	w.WriteHeader(http.StatusNotFound) //404
+	//	return
+	//}
+
 	// SQLにデータをUPDATEする
 	// エラーが発生したら503を返す
 	err = UpdateToDo(db, todo.ID, todo.Title, todo.Status)
@@ -244,14 +249,17 @@ func DELETEMethod(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer db.Close()
+
 	// 指定したUUIDのレコードがあるか確認
-	recordCount, _ := UuidCount(db, todo.ID)
-	if recordCount == 0 {
-		w.WriteHeader(http.StatusNotFound) //404
-		return
-	}
+	//recordCount, _ := UuidCount(db, todo.ID)
+	//if recordCount == 0 {
+	//	w.WriteHeader(http.StatusNotFound) //404
+	//	return
+	//}
+
 	// 指定UUIDのレコードを削除
 	DeleteTodo(db, todo.ID)
+
 	// ステータスコード
 	w.WriteHeader(http.StatusNoContent) //204
 	//fmt.Println("UUID:", todo.Uuid)

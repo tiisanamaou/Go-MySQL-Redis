@@ -27,7 +27,8 @@ func RedisDataSet(rdb *redis.Client, key string, value string) {
 	var ctx = context.Background()
 
 	//err := rdb.Set(ctx, key, value, 0).Err()
-	err := rdb.Set(ctx, key, value, 30*time.Second).Err()
+	//err := rdb.Set(ctx, key, value, 30*time.Second).Err()
+	err := rdb.Set(ctx, key, value, 10*time.Minute).Err()
 	//err := rdb.Set(ctx, key, value, 1*time.Hour).Err()
 	if err != nil {
 		fmt.Println("登録エラー")

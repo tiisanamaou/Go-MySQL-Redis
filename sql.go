@@ -43,14 +43,12 @@ func MysqlConnect() *sql.DB {
 /*
 新規レコード作成
 */
-func InsertTodo(db *sql.DB, id int, uuid string, title string) (int64, error) {
-	//var progress int = 5
+func InsertTodo(db *sql.DB, userid string, title string, progress int) (int64, error) {
 	res, err := db.Exec(
-		"INSERT INTO "+TableName+" (ID, Title) VALUES (?, ?)",
-		id,
-		//uuid,
+		"INSERT INTO "+TableName+" (userid, title, progress) VALUES (?, ?, ?)",
+		userid,
 		title,
-		//progress,
+		progress,
 	)
 	if err != nil {
 		fmt.Println("INSERT USER ERROR db.Exe err")
@@ -75,10 +73,13 @@ func InsertTodo(db *sql.DB, id int, uuid string, title string) (int64, error) {
 func UpdateToDo(db *sql.DB, id int, title string, progress int) error {
 	if _, err := db.Exec(
 		//"UPDATE todo123 SET id = ?, title = ? WHERE uuid = ?",
-		"UPDATE "+TableName+" SET id = ?, title = ?, progress = ? WHERE uuid = ?",
-		id,
+		//"UPDATE "+TableName+" SET id = ?, title = ?, progress = ? WHERE uuid = ?",
+		"UPDATE "+TableName+" SET title = ?, progress = ? WHERE id = ?",
+		//"UPDATE "+TableName+" SET title = ?, progress = ? WHERE id = ? AND userid = ?",
 		title,
 		progress,
+		id,
+		//userid,
 	); err != nil {
 		fmt.Println(err)
 		fmt.Println("UPDATE エラー")
@@ -94,7 +95,8 @@ func UpdateToDo(db *sql.DB, id int, title string, progress int) error {
 func DeleteTodo(db *sql.DB, id int) error {
 	if _, err := db.Exec(
 		//"DELETE FROM todo123 WHERE uuid = ?",
-		"DELETE FROM "+TableName+" WHERE uuid = ?",
+		//"DELETE FROM "+TableName+" WHERE uuid = ?",
+		"DELETE FROM "+TableName+" WHERE id = ?",
 		id,
 	); err != nil {
 		fmt.Println(err)
@@ -301,7 +303,7 @@ func SearchUserToDo(db *sql.DB, userid string, searchWord string) {
 			ID:       todo.ID,
 			UserID:   todo.UserID,
 			Title:    todo.Title,
-			Status:   todo.Status, // Add
+			Status:   todo.Status,
 			CreateAt: todo.CreateAt,
 			UpdateAt: todo.UpdateAt,
 		})
